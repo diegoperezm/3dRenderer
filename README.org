@@ -1,0 +1,198 @@
+* General 
+
+ I am trying to build a 3d renderer using: APL (GNU APL), Python, PySDL2 and SMC (the state machine Compiler). I will follow the guide [[https://avikdas.com/build-your-own-raytracer/][build-your-own-raytracer]] .
+
+
+* Prerequisites
+
+** GNU APL
+
+
+- I'am using the Subversion repository:
+
+#+BEGIN_SRC sh
+svn co http://svn.savannah.gnu.org/svn/apl/trunk
+#+END_SRC
+
+
+- GNU APL requires a specific Python (3.4) to compile the module (Python.h not found).
+
+- To get the python module, I had to follow the instructions of the file: =~/trunk/README-10-python=
+
+#+BEGIN_EXAMPLE
+GNU APL can be compiled as a Python module.
+The basic build procedure is this:
+
+    configure --with-python [ other ./configure options ...]
+    make
+    sudo make install
+
+This installs a shared object file named 'libgnu_apl.so' in the place where
+GNU APL installs its libraries (typically /usr/local/lib/apl or
+/usr/lib/apl)
+
+The shared object file must then be copied to the directory where Python
+keeps its libraries (e.g. /usr/lib/python3.4/lib-dynload/). For example (if
+your Python version is 3.4, and NOTICE THE DIFFERENT NAME OF THE .so FILE):
+
+    sudo cp /usr/local/lib/apl/lib_gnu_apl.so \
+            /usr/lib/python3.4/lib-dynload/gnu_apl.cpython-34m.so
+
+After that, one can import GNU APL in Python and call Python functions
+provided by gnu_apl:
+
+>>> import gnu_apl
+>>> gnu_apl.exec("4 4⍴1+2")
+3 3 3 3
+3 3 3 3
+3 3 3 3
+3 3 3 3
+0
+>>> gnu_apl.command(")WSID")
+'IS CLEAR WS\n'
+
+
+The output above is a mix of APL output and Python output, which is more often
+than not a bad idea. A better approach is to generate no APL output (i,e, the
+results of APL computations should be assigned to variables and variables ⎕
+and ⍞ should not be used). Alternatively, you can change the default print
+behaviour in Python with gnu_apl.set_display(mode). See, for example,
+gnu_apl.help('set_display').
+
+After a sucessful installation you can display the documentation of all Python
+functions in an interactive Python session like this:
+
+>>> import gnu_apl
+>>> gnu_apl.help('all')
+
+
+#+END_EXAMPLE
+
+
+- My current GNU APL version
+
+#+BEGIN_SRC sh :results verbatim
+apl --version
+#+END_SRC
+
+#+RESULTS:
+: BUILDTAG:
+: ---------
+:     Project:        GNU APL
+:     Version / SVN:  1.8 / 1182M
+:     Archive SVN:    1161
+
+** SDL2 and PySDL2
+
+TODO:
+- [ ]  add commands to install SDL2 and PySDL2
+
+
+* Code
+
+The idea is use APL to make all the math related stuff, SMC[0] for control flow. Python and PySDL2 seems easy to use.
+
+The interesting part at the moment is this one:
+
+#+BEGIN_SRC python
+# I will probably end using an apl-workspace, but for the moment this is good enough.
+lis = (gnu_apl.exec("((⍳10)(⌽⍳10)(⍳10)(⌽⍳10)(⍳10))"))
+
+arr = []
+
+# GNU APL returns a Tuple, I will problably make an ADT 
+for index, value in enumerate(lis[1][1]):
+ arr.append(value[1])
+#+END_SRC
+
+
+
+  
+
+
+** Final code
+
+#+BEGIN_SRC  python :tangle  ./renderer.py
+import gnu_apl
+import sys
+import sdl2
+import sdl2.ext
+
+WHITE  = sdl2.ext.Color(255, 255, 255)
+RED    = sdl2.ext.Color(255,   0, 0)
+GREEN  = sdl2.ext.Color(0,   255, 0)
+BLUE   = sdl2.ext.Color(0,     0, 255)
+BLACK  = sdl2.ext.Color(0,     0, 0)
+
+WIDTH  = 20
+HEIGHT = 20
+
+lis = (gnu_apl.exec("((⍳10)(⌽⍳10)(⍳10)(⌽⍳10)(⍳10))"))
+
+arr = []
+
+for index, value in enumerate(lis[1][1]):
+ arr.append(value[1])
+
+
+def run():
+ sdl2.ext.init()
+ window = sdl2.ext.Window("This is a WINDOW", size=(400, 600))
+ window.show()
+
+ surface = sdl2.ext.Window.get_surface(window)
+ renderer = sdl2.ext.Renderer(window)
+ running  =  True
+
+ while running:
+    for event in sdl2.ext.get_events():
+      if event.type == sdl2.SDL_QUIT:
+           running = False
+           break
+      if event.type == sdl2.SDL_KEYDOWN:
+           break
+      if event.type == sdl2.SDL_MOUSEBUTTONDOWN:
+           running = False
+           break
+    sdl2.SDL_Delay(100)
+
+    renderer.clear(0)
+
+    for y,a in enumerate(arr):
+     for x,b in enumerate(a):
+      if arr[y][x] == 1:
+       renderer.fill(((x*WIDTH),(y*HEIGHT), WIDTH, HEIGHT), RED)
+      else:
+       renderer.draw_rect(((x*WIDTH),(y*HEIGHT), WIDTH, HEIGHT), WHITE)
+    renderer.present()
+
+if __name__ == "__main__":
+  sys.exit(run())
+
+
+
+#+END_SRC
+
+
+
+** Result
+
+ The above code create this window:
+
+
+[[file:./window.png]]
+
+
+* Run 
+
+#+BEGIN_SRC sh
+python3.4 renderer.py 
+#+END_SRC
+
+
+* Notes
+  
+
+#+BEGIN_QUOTE
+SMC SMC generates finite state machines for objects - not processes or applications but for an individual object. If you have *objects that receive asynchronous callbacks* and how objects *respond to those callbacks are based on the object state*, then SMC provides a powerful solution. 
+#+END_QUOTE
