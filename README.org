@@ -246,10 +246,223 @@ if __name__ == "__main__":
 python3.4 renderer.py 
 #+END_SRC
 
+** nodemon
+
+Funny, nodemon can be used with python files (=nodemon --exec  python3.4 renderer.py=)
+
+
+* GNU APL documentation
+
+** general  
+
+Synopsis: gnu_apl.help(topic)
+   topic is an UTF8 string containing a help topic.
+
+Examples:
+    gnu_apl.help()           (this text)
+    gnu_apl.help('all')      (long)
+    gnu_apl.help('help')
+    gnu_apl.help('command')
+    gnu_apl.help('exec')
+    gnu_apl.help('fix_function')
+    gnu_apl.help('get_ravel')
+    gnu_apl.help('get_shape')
+    gnu_apl.help('get_value')
+    gnu_apl.help('set_value')
+    gnu_apl.help('APL-values')
+
+-------------------------------------------------------------------------------
+gnu_apl.command() : execute an APL command.
+
+Synopsis: Result = gnu_apl.command(cmd)
+   cmd is an UTF8 string containing a valid APL expression
+
+Result:
+   a UTF8 string that contains the output of the command (which depends on
+   the command that was executed).
+-------------------------------------------------------------------------------
+
+
+** gnu_apl.exec() : execute an APL expression.
+
+Synopsis: Result = gnu_apl.exec(expr)
+   expr is an UTF8 string containing a valid APL expression
+
+Result:
+    tuple(0, error_code)   if the expression caused an error
+    tuple(1, value)        if the expression returned an uncommitted value
+    tuple(2, value)        if the expression returned a committed value
+    tuple(3, None)         if the expression returned no value
+    tuple(4, value)        if the expression returned a branch (e.g. →N)
+    tuple(5, value)        if the expression returned branch escape (→)
+
+Note: Result has the same format as ⎕EC (execute controlled)
+-------------------------------------------------------------------------------
+
+
+** gnu_apl.fix_function() 
+
+gnu_apl.fix_function() : create (aka. ⎕FX) a new defined APL function, or
+                         change the definition of an existing definition.
+
+Synopsis: Result = gnu_apl.fix_function(text)
+    text is a UTF8 string containing the function lines (separated by \n).
+    The first line in text is the function signature, e.g. Z←A myfun B
+    The subsequent lines in text comprise the function body.
+
+Result:
+    None       if the function could be created,
+    int(0)     if the function signature was incorrect,
+    int(N)     if the body line N ≥ 1 was incorrect.
+    int(-1)    if something else went wrong.
+
+NOTE: creating or modifying defined APL functions with ⎕FX (in APL) or by
+    gnu_apl.fix_function() (in Python) is not the usual way of creating or
+    modifying defined APL functions. Most APL programmers will prefer to use
+    the standard APL ∇-editor (in interactive APL sessions) or to write APL
+    scripts in order to create an APL workspace that contains the desired
+    defined functions. The workspace is then loaded with APL commands
+    )LOAD or )COPY (in APL) resp. gnu_apl.command(')LOAD ...') or
+    gnu_apl.command(')COPY ...') in Python.
+-------------------------------------------------------------------------------
+
+
+** gnu_apl.get_ravel()
+
+gnu_apl.get_ravel() : get the ravel of an APL variable.
+
+Synopsis: Result = gnu_apl.get_ravel(text)
+    varname is a string containing the name of an APL variable.
+
+Result:
+   on sucess:   list [ i₁, i₂, ... iN ] where N is the length of the
+                ravel (aka, ,varname in APL) of the value of the variable,
+                and iK is the K'th ravel element:
+                    int(iK):       an APL integer
+                    float(iK):     an APL float
+                    complex(iK):   an APL complex value
+                    chr(iK):       an APL character (Unicode)
+                    list(iK):      a nested APL sub-value
+                    tuple(R, S):   a nested APL sub-value with ravel R
+                                   and shape S
+
+ otherwise:   int(error_code)
+
+Example:
+    gnu_apl.exec('Var←4 4⍴⍳16')
+(2, ([4, 4], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]))
+    gnu_apl.get_ravel('Var')
+[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+
+
+** gnu_apl.get_shape() : get the shape of an APL variable.
+
+Synopsis: Result = gnu_apl.get_shape(text)
+    varname is a string containing the name of an APL variable.
+
+Result:
+    on sucess:   list [ r₁, r₂, ... rR ] where R is the number of axes
+                 (aka. the rank in APL) of the value of the variable and
+                 rK is the length of the Kth axis.
+    otherwise:   int(error_code)
+
+Example:
+    gnu_apl.exec('Var←4 4⍴⍳16')
+(2, ([4, 4], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]))
+    gnu_apl.get_shape('Var')
+[4, 4]
+
+
+** gnu_apl.get_value() : get the value of an APL variable.
+
+Synopsis: Result = gnu_apl.get_value(varname)
+    varname is a string containing the name of an APL variable.
+
+Result:
+    on sucess:   tuple( get_ravel(varname), get_shape(varname) )
+    otherwise:   int(error_code)
+
+Example:
+    gnu_apl.exec('Var←4 4⍴⍳16')
+(2, ([4, 4], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]))
+    gnu_apl.get_value('Var')
+([4, 4], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
+
+
+** gnu_apl.set_value() : set the value of an APL variable.
+                      The variable is created if necessary.
+
+Synopsis: gnu_apl.set_value(varname, value)
+    varname is a UTF8 string containing the name of an APL variable.
+    value is the new value of the variable, see gnu_apl.help('APL-values').
+
+Examples:
+    gnu_apl.set_value('Var', 65)                # Var ← 65
+    gnu_apl.set_value('Var', 6.5)               # Var ← 6.5
+    gnu_apl.set_value('Var', 6J5)               # Var ← 6J5
+    gnu_apl.set_value('Var', [6, 5, 'A'])       # Var ← 6 5 'A'
+    gnu_apl.set_value('Var', [1, [2, 3], 4])    # Var ← 1 (2 3) 4
+
+
+** gnu_apl.set_display() : set the APL display mode.
+
+Synopsis: Result = gnu_apl.set_display(mode)
+    mode is an integer:
+        0:     display neither committed values nor not committed values
+        1:     display only not committed values (standard APL behavior)
+        2:     display both committed values and not committed values
+
+Result: the previous display mode
+
+
+** APL-values : The mapping between Python values and APL values (examples):
+
+╔═══════════════════════════╤══╤════════════╤═══════════════════════════════╗
+║ Python value              │  │ APL value  │ Remark                        ║
+╠═══════════════════════════╪══╪════════════╪════════════╤══════════════════╣
+║ int(65)                   │ →│ 65         │            │ Integer          ║
+╟───────────────────────────┼──┼────────────┤            ├──────────────────╢
+║ float(6.5)                │ →│ 6.5        │            │ Floating point   ║
+╟───────────────────────────┼──┼────────────┤ APL Scalar ├──────────────────╢
+║ complex(6, 5)             │ →│ 6J5        │            │ Complex          ║
+╟───────────────────────────┼──┼────────────┤            ├──────────────────╢
+║ chr(65) or 'A'            │ →│ 'A'        │            │ single Unicode   ║
+╠═══════════════════════════╪══╪════════════╪════════════╪══════════════════╣
+║ list([6, 5, 'A'])         │ →│ 6 5 'A'    │            │ Mixed            ║
+╟───────────────────────────┼──┼────────────┤ APL Vector ├──────────────────╢
+║ str('string')             │ →│ 'string'   │            │ Character        ║
+╠═══════════════════════════╪══╪════════════╪════════════╪══════════════════╣
+║ tuple([65],  [])          │←→│ 65         │ APL Scalar │ Integer          ║
+║ tuple([6.5], [])          │←→│ 6.5        │ (as above) │ Floating point   ║
+║ tuple([6J5], [])          │←→│ 6J5        │ in tuple() │ Complex          ║
+║ tuple(['A'], [])          │←→│ 'A'        │ format     │ single Unicode   ║
+╟───────────────────────────┼──┼────────────┼────────────┴──────────────────╢
+║ tuple([6, 5, 'A'], [3])   │←→│ 6 5 'A'    │ Vector of length 3 (as above) ║
+╟───────────────────────────┼──┼────────────┼───────────────────────────────╢
+║ ravel = [6, 5, 'A']       │  │ 6 5 'A'    │ 2×3 Matrix. The ravel is      ║
+║ shape = [2, 3]            │←→│ 6 5 'A'    │ truncated or repeated as      ║
+║ tuple(ravel, shape)       │  │            │ needed to fill the shape      ║
+╟───────────────────────────┼──┼────────────┼───────────────────────────────╢
+║ any non-scalar array item │  │ nested APL │ 3-element vector with nested  ║
+║ (such as str() or list()  │  │ array      │ second element which is the   ║
+║ or tuple() above)         │  │            │ 2-element sub-vector 2 3      ║
+║ [1 [2, 3] 4]              │←→│ 1 (2 3) 4  │                               ║
+╚═══════════════════════════╧══╧════════════╧═══════════════════════════════╝
+
+NOTE: Every non-tuple() variant (like str('string') or list([i₁, i₂, ...])
+      above is a convenience shortcut that can also be expressed in the form
+      of the more general tuple() variant. For performance reasons, but also
+      to simplify the decoding of APL values in Python, these convenience
+      shortcuts work only in the Python → APL direction; *values in the*
+      *APL → Python direction are always returned in the _tuple()_ format.*
+
+
+
+
 
 * Notes
   
 
 #+BEGIN_QUOTE
-SMC SMC generates finite state machines for objects - not processes or applications but for an individual object. If you have *objects that receive asynchronous callbacks* and how objects *respond to those callbacks are based on the object state*, then SMC provides a powerful solution. 
+SMC generates finite state machines for objects - not processes or applications but for an individual object. If you have *objects that receive asynchronous callbacks* and how objects *respond to those callbacks are based on the object state*, then SMC provides a powerful solution. 
 #+END_QUOTE
