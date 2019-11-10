@@ -81,3 +81,6 @@ node_modules
 
 # Debug log from npm
 npm-debug.log
+.apl.history
+.apl.bak
+apl.bak
