@@ -88,31 +88,77 @@ TODO:
 - [ ]  add commands to install SDL2 and PySDL2
 
 
+* GNU APL functions
+
+**  getters
+
+gnu_apl.get_shape  
+
+gnu_apl.get_ravel
+
+gnu_apl.get_value
+
+**  setter
+   
+gnu_apl.set_value(varname, value)
+
+
 * Code
+
+** Python
 
 The idea is use APL to make all the math related stuff, SMC[0] for control flow. Python and PySDL2 seems easy to use.
 
 The interesting part at the moment is this one:
 
 #+BEGIN_SRC python
-# I will probably end using an apl-workspace, but for the moment this is good enough.
-lis = (gnu_apl.exec("((⍳10)(⌽⍳10)(⍳10)(⌽⍳10)(⍳10))"))
+# this load an apl-workspace
+gnu_apl.command(")COPY ./apl")
 
-arr = []
 
-# GNU APL returns a Tuple, I will problably make an ADT 
-for index, value in enumerate(lis[1][1]):
- arr.append(value[1])
+# using the getters from GNU-APL
+
+# not sure about the name, but good enough for now
+# aplVar => list 
+def makeImage(aplVar):
+  data     = gnu_apl.get_ravel(aplVar)
+  shape    = gnu_apl.get_shape(aplVar)
+  shapeY   = shape[0] 
+  shapeX   = shape[1] 
+  arr      = [ [0 for x in range(shapeX)] for y in range(shapeY)]
+  for y in range(shapeY):
+   for x in range(shapeX):
+    arr[y][x]=data[x]
+  return arr
 #+END_SRC
 
 
 
-  
+** APL
+
+
+#+BEGIN_SRC apl :tangle ./apl.apl
+canvas      ←   10     10      ⍴ 0 0 0 0 1
+topLeft     ←    ¯3    ¯0.5    1
+topRight    ←  1.28    0.86 ¯0.5
+bottomLeft  ← ¯1.28   ¯0.86 ¯0.5
+bottomRight ←  1.28   ¯0.86 ¯0.5
+imagePlane ← topLeft topRight bottomLeft bottomRight
+4 1 ⍴ imagePlane
+imagePlane topLeft
+vector3 ← {⍵} 
+vector3 0 0 2
+camera ← vector3 0 0 2
+camera
+ray ← {⍵}
+sphere ← {⍵}
+newSphere ← sphere ¯1.1 0.6 ¯1
+#+END_SRC
 
 
 ** Final code
 
-#+BEGIN_SRC  python :tangle  ./renderer.py
+#+BEGIN_SRC python :tangle ./renderer.py
 import gnu_apl
 import sys
 import sdl2
