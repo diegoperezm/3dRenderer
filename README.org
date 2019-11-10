@@ -173,22 +173,41 @@ BLACK  = sdl2.ext.Color(0,     0, 0)
 WIDTH  = 20
 HEIGHT = 20
 
-lis = (gnu_apl.exec("((⍳10)(⌽⍳10)(⍳10)(⌽⍳10)(⍳10))"))
+gnu_apl.command(")COPY ./apl")
 
-arr = []
+# aplVar => list 
+def makeImage(aplVar):
+  data     = gnu_apl.get_ravel(aplVar)
+  shape    = gnu_apl.get_shape(aplVar)
+  shapeY   = shape[0] 
+  shapeX   = shape[1] 
+  arr      = [ [0 for x in range(shapeX)] for y in range(shapeY)]
+  for y in range(shapeY):
+   for x in range(shapeX):
+    arr[y][x]=data[x]
+  return arr
 
-for index, value in enumerate(lis[1][1]):
- arr.append(value[1])
-
+image = makeImage("canvas")
 
 def run():
  sdl2.ext.init()
- window = sdl2.ext.Window("This is a WINDOW", size=(400, 600))
+ window = sdl2.ext.Window("This is a WINDOW", size=(200, 300))
  window.show()
 
- surface = sdl2.ext.Window.get_surface(window)
+ surface  = sdl2.ext.Window.get_surface(window)
  renderer = sdl2.ext.Renderer(window)
  running  =  True
+
+ renderer.clear(0)
+
+ for y,a in enumerate(image):
+  for x,b in enumerate(a):
+   if image[y][x] == 1:
+    renderer.fill(((x*WIDTH),(y*HEIGHT), WIDTH, HEIGHT), RED)
+   else:
+    renderer.draw_rect(((x*WIDTH),(y*HEIGHT), WIDTH, HEIGHT), WHITE)
+ renderer.present()
+
 
  while running:
     for event in sdl2.ext.get_events():
@@ -196,28 +215,20 @@ def run():
            running = False
            break
       if event.type == sdl2.SDL_KEYDOWN:
+           running = False
            break
       if event.type == sdl2.SDL_MOUSEBUTTONDOWN:
            running = False
            break
-    sdl2.SDL_Delay(100)
+    sdl2.SDL_Delay(10)
 
-    renderer.clear(0)
 
-    for y,a in enumerate(arr):
-     for x,b in enumerate(a):
-      if arr[y][x] == 1:
-       renderer.fill(((x*WIDTH),(y*HEIGHT), WIDTH, HEIGHT), RED)
-      else:
-       renderer.draw_rect(((x*WIDTH),(y*HEIGHT), WIDTH, HEIGHT), WHITE)
-    renderer.present()
 
 if __name__ == "__main__":
   sys.exit(run())
 
-
-
 #+END_SRC
+
 
 
 
